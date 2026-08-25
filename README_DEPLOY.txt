@@ -1,34 +1,23 @@
-SMART WATER TANK - VERCEL LIVE ESP32 DASHBOARD
+SMART WATER TANK - VERCEL DEPLOYMENT
 
-Use this folder as the ROOT of the Vercel project.
+IMPORTANT: deploy THIS FOLDER as the Vercel project root.
 
-Files:
-  index.html
-  api/data.js
-  api/reset.js
-  lib/store.js
-  package.json
+Required structure:
+index.html
+api/data.js
+api/reset.js
+lib/store.js
+package.json
 
-LIVE DATA FLOW:
-  ESP32  --POST-->  /api/data  --stored--> latest state
-  Dashboard --GET--> /api/data  --reads--> latest state
-  Dashboard --POST--> /api/reset --queues--> resetRequested:true
-  ESP32 receives resetRequested:true in its next /api/data POST response.
+API TEST:
+GET https://YOUR-DOMAIN.vercel.app/api/data
+Expected: JSON, NOT 404.
 
-IMPORTANT:
-1. Deploy the ENTIRE folder, not only index.html.
-2. The api/ and lib/ folders must be deployed.
-3. After deployment, open:
-   https://smart-water-tank-automation.vercel.app/api/data
-   It should return JSON, not 404.
-4. ESP32 must have Internet Wi-Fi access.
-5. ESP32 CLOUD_API_URL must be:
-   https://smart-water-tank-automation.vercel.app/api/data
+ESP32 POST:
+POST https://YOUR-DOMAIN.vercel.app/api/data
+Content-Type: application/json
 
-The dashboard has been changed to use same-origin /api/data and /api/reset.
-It no longer tries to read http://192.168.4.1/data from a hosted HTTPS page.
+Dashboard reset:
+POST /api/reset
 
-DEMO STORAGE NOTE:
-lib/store.js is an in-memory store. It is fine for a college demonstration,
-but Vercel serverless cold starts can reset it. A persistent database can be
-added later if you need data to survive restarts.
+If your current domain still returns 404 after deployment, you are opening an older deployment/project. Redeploy this folder to the same Vercel project or update the domain's production deployment.
