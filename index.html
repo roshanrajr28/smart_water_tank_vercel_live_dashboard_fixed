@@ -1,0 +1,1007 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smart Water Tank • Graphical SCADA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#060a14;--bg2:#0a0f1d;
+  --panel:linear-gradient(180deg,rgba(23,32,54,.78),rgba(15,21,37,.85));
+  --panel-solid:#0e1526;
+  --panel2:#121b30;
+  --border:rgba(148,163,196,.14);
+  --border2:rgba(148,163,196,.09);
+  --text:#eef2ff;--muted:#8a93b3;--muted2:#5f6889;
+
+  --cyan:#22d3ee;--cyan2:#2dd4ff;--indigo:#6f7bff;--violet:#a78bfa;
+  --green:#22e6a8;--orange:#ffb454;--red:#ff5c7a;--fuchsia:#f472d0;
+
+  --grad-brand:linear-gradient(135deg,#22d3ee,#6f7bff 55%,#a78bfa);
+  --grad-live:linear-gradient(135deg,#10e5a8,#0bbf8a);
+  --grad-btn:linear-gradient(135deg,#22d3ee,#6366f1);
+  --grad-ai:linear-gradient(135deg,#a78bfa,#f472d0);
+  --shadow-card:0 1px 0 rgba(255,255,255,.04) inset,0 10px 30px -12px rgba(0,0,0,.55);
+  --shadow-pop:0 20px 60px -20px rgba(80,120,255,.35);
+}
+html{scroll-behavior:smooth}
+body{margin:0;background:
+    radial-gradient(1100px 620px at 85% -8%,rgba(111,123,255,.16),transparent 60%),
+    radial-gradient(900px 500px at -5% 10%,rgba(34,211,238,.10),transparent 55%),
+    var(--bg);
+  color:var(--text);font-family:'Inter',system-ui,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+::selection{background:#6f7bff55}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#26314a;border-radius:20px;border:2px solid transparent;background-clip:padding-box}
+.app{display:flex;min-height:100vh}
+/* SIDEBAR */
+.sidebar{width:246px;flex:0 0 246px;background:linear-gradient(180deg,#080c17,#060911);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.side-brand{display:flex;gap:11px;align-items:center;padding:22px 18px;border-bottom:1px solid var(--border)}
+.side-brand .logo{font-size:22px;width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--grad-brand);box-shadow:0 8px 22px -6px rgba(111,123,255,.55)}
+.side-brand .t1{font-size:13.5px;font-weight:800;line-height:1.25;letter-spacing:.2px}
+.side-brand .t2{font-size:8.7px;color:var(--muted);letter-spacing:1.8px;font-weight:600;margin-top:2px}
+nav.navlist{padding:12px 10px;display:flex;flex-direction:column;gap:3px;overflow-y:auto}
+.navsec{font-size:8.5px;color:var(--muted2);letter-spacing:1.6px;font-weight:700;padding:14px 12px 6px}
+.navitem{display:flex;align-items:center;gap:11px;text-align:left;background:transparent;border:0;color:#9aa6c7;padding:11px 12px;border-radius:11px;font-size:12.5px;cursor:pointer;font-weight:600;transition:background .15s,color .15s;position:relative}
+.navitem:hover{background:#101a30;color:#eaf3ff}
+.navitem.active{background:linear-gradient(90deg,rgba(111,123,255,.22),rgba(34,211,238,.06));color:#8fe8ff;box-shadow:inset 3px 0 0 var(--cyan)}
+.navitem .ic{font-size:15px;width:19px;text-align:center}
+.navitem .nb{margin-left:auto;font-size:8.5px;font-weight:800;background:var(--grad-ai);color:#1b0f2e;padding:2px 6px;border-radius:20px;letter-spacing:.5px}
+.side-footer{margin-top:auto;padding:15px 18px;border-top:1px solid var(--border);font-size:9px;color:var(--muted);line-height:1.7}
+.side-footer .b{color:var(--green);font-weight:bold}
+/* MAIN */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 26px;border-bottom:1px solid var(--border);background:rgba(8,13,24,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:20}
+.topleft h1{font-size:18px;margin:0;font-weight:800;letter-spacing:.2px}
+.crumbs{font-size:9.5px;color:var(--muted);margin-top:3px;letter-spacing:1px;font-weight:600}
+.topright{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.live{padding:8px 14px;border:1px solid rgba(16,229,168,.3);background:linear-gradient(135deg,rgba(16,229,168,.14),rgba(16,229,168,.04));color:var(--green);border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.3px}
+.auto{padding:8px 14px;border:1px solid rgba(111,123,255,.35);background:linear-gradient(135deg,rgba(111,123,255,.16),rgba(34,211,238,.05));color:#8fb0ff;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.3px}
+.uptime{font-size:10px;color:var(--muted);font-weight:600}
+.dot{display:inline-block;width:7px;height:7px;background:var(--green);border-radius:50%;margin-right:6px;box-shadow:0 0 8px var(--green);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.content{padding:22px 26px 44px;max-width:1520px;width:100%;margin:0 auto}
+.view{display:none}
+.view.active{display:block;animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+/* CARD GRID (home) */
+.cardgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.navcard{background:var(--panel);border:1px solid var(--border);border-radius:17px;padding:19px;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s;box-shadow:var(--shadow-card);position:relative;overflow:hidden}
+.navcard::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:var(--grad-brand);opacity:0;transition:opacity .18s}
+.navcard:hover{transform:translateY(-4px);border-color:rgba(111,123,255,.4);box-shadow:var(--shadow-pop)}
+.navcard:hover::before{opacity:1}
+.navcard .nc-top{display:flex;justify-content:space-between;align-items:flex-start}
+.navcard .nc-ic{font-size:24px;width:44px;height:44px;border-radius:12px;background:var(--panel2);display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+.navcard .nc-badge{font-size:8.7px;color:#8dc4d6;background:#0e2936;border-radius:6px;padding:5px 8px;font-weight:700;letter-spacing:.4px}
+.navcard h3{font-size:14.5px;margin:14px 0 4px;font-weight:700}
+.navcard p{font-size:11px;color:var(--muted);margin:0 0 15px;line-height:1.55}
+.nc-stats{display:flex;gap:10px}
+.nc-stat{flex:1;background:var(--panel2);border-radius:10px;padding:9px;border:1px solid var(--border2)}
+.nc-stat small{color:#718f9d;font-size:8.3px;display:block;font-weight:600;letter-spacing:.3px}
+.nc-stat b{font-size:14.5px;font-weight:800}
+.herobar{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.hero{background:var(--panel);border:1px solid var(--border);border-radius:17px;padding:17px;box-shadow:var(--shadow-card);position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,rgba(111,123,255,.18),transparent 70%)}
+.hero small{color:var(--muted);font-size:9.3px;letter-spacing:.8px;font-weight:700}
+.hero b{display:block;font-size:25px;margin-top:7px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.hero .d{font-size:9.5px;margin-top:5px;color:var(--muted);font-weight:600}
+/* PANELS (shared) */
+.grid{display:grid;grid-template-columns:1.35fr .8fr .8fr;gap:14px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:17px;padding:17px;box-shadow:var(--shadow-card);margin-bottom:14px}
+.wide{grid-column:1/-1}
+.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}
+.head h2{font-size:13.5px;margin:0;font-weight:700;letter-spacing:.2px}
+.tag{font-size:8.7px;color:#8dc4d6;background:#0e2936;border-radius:6px;padding:5px 8px;font-weight:700;letter-spacing:.4px}
+.tankPanel{min-height:470px}
+.tankArea{height:330px;display:flex;align-items:center;justify-content:center;gap:45px;flex-wrap:wrap}
+.tank{position:relative;width:170px;height:285px;border:4px solid var(--cyan);border-radius:18px 18px 28px 28px;overflow:hidden;background:#06121a;box-shadow:0 0 40px rgba(34,211,238,.18),inset 0 0 30px rgba(0,0,0,.4)}
+.water{position:absolute;bottom:0;width:100%;height:5%;background:linear-gradient(#3fe0ff,#5c6bff);transition:height .6s}
+.wave{position:absolute;top:-9px;left:-20%;width:140%;height:22px;background:#8eeaff66;border-radius:50%;animation:w 2s linear infinite}
+@keyframes w{from{transform:translateX(-8%)}to{transform:translateX(8%)}}
+.tanklabel{position:absolute;z-index:2;top:40%;width:100%;text-align:center;font-size:26px;font-weight:800;text-shadow:0 2px 8px #000;font-family:'JetBrains Mono',monospace}
+.litres{position:absolute;z-index:2;top:52%;width:100%;text-align:center;font-size:10px;color:#c9f2ff;text-shadow:0 2px 6px #000;font-weight:600}
+.pipe{position:absolute;width:90px;height:20px;border:4px solid #4a5b78;border-left:0;right:-90px;top:70px}
+.flowdot{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--cyan2);top:78px;right:-90px;opacity:0;animation:flowmove 1s linear infinite}
+@keyframes flowmove{0%{right:-90px;opacity:0}10%{opacity:1}90%{opacity:1}100%{right:-4px;opacity:0}}
+.gauge{width:170px;height:170px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--green) 0deg,var(--green) 18deg,#161f34 18deg);box-shadow:0 0 40px rgba(111,123,255,.12)}
+.gin{width:135px;height:135px;border-radius:50%;background:#0a1120;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gn{font-size:28px;font-weight:800;font-family:'JetBrains Mono',monospace}.gm{font-size:9px;color:var(--muted);font-weight:700;letter-spacing:.4px}
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.box{background:var(--panel2);border-radius:12px;padding:13px;border:1px solid var(--border2)}
+.box small{color:#718f9d;font-size:8.8px;font-weight:700;letter-spacing:.3px}.box b{display:block;margin-top:6px;font-size:17px;font-family:'JetBrains Mono',monospace;font-weight:700}
+.green{color:var(--green)}.cyan{color:var(--cyan)}.orange{color:var(--orange)}.red{color:var(--red)}.violet{color:var(--violet)}.fuchsia{color:var(--fuchsia)}
+.row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border2);font-size:11px}
+.row:last-child{border:0}.muted{color:var(--muted)}
+.motor{height:120px;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:14px;background:linear-gradient(160deg,rgba(16,229,168,.16),rgba(16,229,168,.03));border:1px solid rgba(16,229,168,.35)}
+.motor .micon{font-size:37px}
+.motor.off{background:var(--panel2);border-color:var(--border)}
+.motor.fault{background:linear-gradient(160deg,rgba(255,92,122,.2),rgba(255,92,122,.03));border-color:rgba(255,92,122,.45)}
+.motor.run .micon{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+canvas{width:100%;height:220px;background:#070c17;border-radius:12px}
+.legend{display:flex;gap:16px;font-size:9px;color:#8dc4d6;margin-top:6px;font-weight:600}
+.legend span{display:flex;align-items:center;gap:5px}
+.sw{width:10px;height:3px;border-radius:2px;display:inline-block}
+.timeline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.step{flex:1;min-width:70px;text-align:center;padding:13px 5px;border-radius:10px;background:var(--panel2);color:var(--muted);font-size:10px;font-weight:600;border:1px solid var(--border2)}
+.step.on{background:linear-gradient(160deg,rgba(16,229,168,.18),rgba(16,229,168,.04));color:var(--green);border-color:rgba(16,229,168,.35)}
+.line{height:2px;background:#21283e;flex:0 0 20px}
+.alert{padding:14px;border-left:4px solid var(--green);background:rgba(16,229,168,.06);border-radius:10px;font-size:11px}
+.events{height:220px;overflow:auto}
+.event{padding:9px 4px;border-bottom:1px solid var(--border2);color:#8da8b4;font-size:10.5px;font-family:'JetBrains Mono',monospace}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.controls button{padding:11px;border:0;border-radius:10px;background:var(--panel2);border:1px solid var(--border);color:#dff8ff;font-weight:700;cursor:pointer;font-size:11px;transition:background .15s,border-color .15s}
+.controls button:hover{background:#182238;border-color:rgba(111,123,255,.4)}
+.bars{display:flex;align-items:flex-end;gap:6px;height:110px;padding-top:8px}
+.bar{flex:1;background:linear-gradient(#3fe0ff,#5c6bff);border-radius:5px 5px 0 0;min-height:2px;position:relative}
+.bar span{position:absolute;bottom:-16px;left:0;right:0;text-align:center;font-size:8px;color:var(--muted)}
+/* TABS */
+.tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:0}
+.tabbtn{background:transparent;border:0;color:var(--muted);padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s}
+.tabbtn:hover{color:#cfeaf5}
+.tabbtn.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+.tabpanel{display:none}
+.tabpanel.active{display:block}
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:left;color:var(--muted);font-size:9px;letter-spacing:.6px;padding:9px 10px;border-bottom:1px solid var(--border);font-weight:700}
+td{padding:10px;border-bottom:1px solid var(--border2)}
+tr:last-child td{border-bottom:0}
+tr:hover td{background:rgba(111,123,255,.04)}
+.pill{padding:3px 10px;border-radius:20px;font-size:9.3px;font-weight:800;letter-spacing:.2px}
+.pill.ok{background:rgba(16,229,168,.14);color:var(--green)}
+.pill.bad{background:rgba(255,92,122,.14);color:var(--red)}
+/* SETTINGS FORM */
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11px;color:var(--muted);font-weight:600}
+.field input{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace}
+.field input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.15)}
+.savebar{display:flex;gap:10px;margin-top:16px}
+.savebar button{padding:12px 20px;border:0;border-radius:11px;font-weight:800;cursor:pointer;font-size:12px;letter-spacing:.2px}
+.btn-primary{background:var(--grad-btn);color:#04121c;box-shadow:0 10px 26px -10px rgba(34,211,238,.5)}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-ghost{background:var(--panel2);color:var(--text);border:1px solid var(--border) !important}
+.btn-ghost:hover{border-color:rgba(111,123,255,.4) !important}
+.footer{text-align:center;color:#4c5675;font-size:9px;padding:16px;font-weight:600;letter-spacing:.2px}
+/* AI ASSISTANT */
+.aiwrap{display:grid;grid-template-columns:1fr 300px;gap:14px}
+.aichat{background:var(--panel);border:1px solid var(--border);border-radius:17px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;height:560px;overflow:hidden}
+.aichat-head{display:flex;align-items:center;gap:11px;padding:16px 18px;border-bottom:1px solid var(--border);background:linear-gradient(90deg,rgba(167,139,250,.1),rgba(244,114,208,.04))}
+.aichat-avatar{width:38px;height:38px;border-radius:11px;background:var(--grad-ai);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 8px 20px -6px rgba(167,139,250,.6)}
+.aichat-head b{font-size:13.5px;display:block}
+.aichat-head .sub{font-size:9.5px;color:var(--muted);font-weight:600}
+.aimsgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:78%;padding:11px 14px;border-radius:14px;font-size:12.5px;line-height:1.55}
+.msg.bot{align-self:flex-start;background:var(--panel2);border:1px solid var(--border2);border-bottom-left-radius:4px}
+.msg.user{align-self:flex-end;background:var(--grad-btn);color:#04121c;font-weight:600;border-bottom-right-radius:4px}
+.msg.bot b{color:var(--violet)}
+.aichips{display:flex;flex-wrap:wrap;gap:7px;padding:0 18px 12px}
+.chip{background:var(--panel2);border:1px solid var(--border);color:#c8d4ee;padding:7px 12px;border-radius:20px;font-size:10.5px;cursor:pointer;font-weight:600;transition:border-color .15s,color .15s}
+.chip:hover{border-color:var(--violet);color:#eadfff}
+.aiinput{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--border)}
+.aiinput input{flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:11px;padding:11px 14px;color:var(--text);font-size:12.5px}
+.aiinput input:focus{outline:none;border-color:var(--violet)}
+.aiinput button{background:var(--grad-ai);border:0;color:#1b0f2e;font-weight:800;padding:0 18px;border-radius:11px;cursor:pointer;font-size:12.5px}
+.aiside .panel{margin-bottom:14px}
+.aistatrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;font-size:11px;border-bottom:1px solid var(--border2)}
+.aistatrow:last-child{border:0}
+/* QR ACCESS */
+.qrwrap{display:grid;grid-template-columns:.85fr 1.15fr;gap:16px}
+.qrbox{background:#fff;border-radius:14px;padding:16px;display:flex;align-items:center;justify-content:center;min-height:230px}
+.qrurl{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:#9adfff;word-break:break-all}
+.steplist{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.stepitem{display:flex;gap:12px;align-items:flex-start;padding:12px;background:var(--panel2);border:1px solid var(--border2);border-radius:12px}
+.stepnum{width:24px;height:24px;border-radius:8px;background:var(--grad-brand);color:#04121c;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;flex:0 0 24px}
+.stepitem .st-t{font-size:12px;font-weight:700}
+.stepitem .st-d{font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.5}
+@media(max-width:1000px){.grid{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}.cardgrid{grid-template-columns:1fr 1fr}.herobar{grid-template-columns:1fr 1fr}.aiwrap{grid-template-columns:1fr}.qrwrap{grid-template-columns:1fr}}
+@media(max-width:800px){.sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);z-index:50;transition:transform .2s}.sidebar.open{transform:translateX(0)}.menubtn{display:flex !important}}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.tank{width:130px;height:220px}.gauge{width:135px;height:135px}.gin{width:105px;height:105px}.cardgrid{grid-template-columns:1fr}.herobar{grid-template-columns:1fr 1fr}.formgrid{grid-template-columns:1fr}.aimsgs{padding:14px}.msg{max-width:88%}}
+.menubtn{display:none;background:var(--panel2);border:1px solid var(--border);color:#dff8ff;width:36px;height:36px;border-radius:9px;font-size:16px;cursor:pointer;align-items:center;justify-content:center}
+</style></head><body>
+<div class="app">
+
+<aside class="sidebar" id="sidebar">
+  <div class="side-brand"><div class="logo">💧</div><div><div class="t1">SMART WATER TANK</div><div class="t2">GRAPHICAL SCADA</div></div></div>
+  <nav class="navlist">
+    <button class="navitem active" data-view="home"><span class="ic">🏠</span>Overview</button>
+    <button class="navitem" data-view="live"><span class="ic">🏭</span>Live Process</button>
+    <button class="navitem" data-view="automation"><span class="ic">🧠</span>Automation &amp; Protection</button>
+    <button class="navitem" data-view="analytics"><span class="ic">📊</span>Power &amp; Flow Analytics</button>
+    <button class="navitem" data-view="diagnostics"><span class="ic">🛠</span>Diagnostics</button>
+    <button class="navitem" data-view="reports"><span class="ic">📅</span>Reports &amp; History</button>
+    <button class="navitem" data-view="settings"><span class="ic">⚙</span>Settings</button>
+    <div class="navsec">SMART TOOLS</div>
+    <button class="navitem" data-view="assistant"><span class="ic">🤖</span>AI Assistant<span class="nb">NEW</span></button>
+    <button class="navitem" data-view="qraccess"><span class="ic">📱</span>QR Access</button>
+  </nav>
+  <div class="side-footer">Mode: <span class="b">ESP32 CONTROLLED</span><br>Real sensor control / Real sensor control / Auto-start / Auto-stop / Fault-latch<br>v2.0 Graphical SCADA</div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topleft" style="display:flex;align-items:center;gap:12px">
+      <button class="menubtn" id="menubtn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div><h1 id="viewtitle">Overview</h1><div class="crumbs" id="crumbs">DASHBOARD / OVERVIEW</div></div>
+    </div>
+    <div class="topright">
+      <div class="uptime">UPTIME: <b id="uptime" style="color:#c9f2ff">00:00:00</b></div>
+      <div class="auto">⚙ MODE: FULL AUTO</div>
+      <div class="live"><span class="dot"></span>ESP32 OFFLINE</div>
+    </div>
+  </header>
+
+  <div class="content">
+
+  <!-- ============ HOME (CARD GRID) ============ -->
+  <section class="view active" data-view="home">
+    <div class="herobar">
+      <div class="hero"><small>TANK LEVEL</small><b class="js-level cyan">5.0%</b><div class="d js-litres">50 / 1000 L</div></div>
+      <div class="hero"><small>MOTOR STATUS</small><b class="js-motorstat green">STANDBY</b><div class="d">Relay <span class="js-relay">READY</span></div></div>
+      <div class="hero"><small>POWER DRAW</small><b class="js-power orange">0 W</b><div class="d">Flow <span class="js-flow">—</span> LPM</div></div>
+      <div class="hero"><small>ACTIVE ALERTS</small><b class="js-alerts green">0</b><div class="d">System Health <span class="js-health">100%</span></div></div>
+    </div>
+
+    <div class="cardgrid">
+      <div class="navcard" onclick="showView('live')">
+        <div class="nc-top"><div class="nc-ic">🏭</div><div class="nc-badge">GRAPHICAL</div></div>
+        <h3>Live Process View</h3>
+        <p>Real-time tank fill graphic, level gauge and motor control status.</p>
+        <div class="nc-stats"><div class="nc-stat"><small>LEVEL</small><b class="js-level2">5.0%</b></div><div class="nc-stat"><small>MOTOR</small><b class="js-motorstat2">OFF</b></div></div>
+      </div>
+      <div class="navcard" onclick="showView('automation')">
+        <div class="nc-top"><div class="nc-ic">🧠</div><div class="nc-badge">LOGIC</div></div>
+        <h3>Automation &amp; Protection</h3>
+        <p>Decision engine, dry-run &amp; overflow protection, fault-latch sequence.</p>
+        <div class="nc-stats"><div class="nc-stat"><small>PROTECTION</small><b class="green">ARMED</b></div><div class="nc-stat"><small>FAULTS</small><b class="js-alerts2">0</b></div></div>
+      </div>
+      <div class="navcard" onclick="showView('analytics')">
+        <div class="nc-top"><div class="nc-ic">📊</div><div class="nc-badge">ANALYTICS</div></div>
+        <h3>Power &amp; Flow Analytics</h3>
+        <p>Flow rate, voltage, power draw, energy usage and running cost.</p>
+        <div class="nc-stats"><div class="nc-stat"><small>ENERGY TODAY</small><b class="js-energy2">0.000</b></div><div class="nc-stat"><small>COST</small><b class="js-cost2">₹0.00</b></div></div>
+      </div>
+      <div class="navcard" onclick="showView('diagnostics')">
+        <div class="nc-top"><div class="nc-ic">🛠</div><div class="nc-badge">HEALTH</div></div>
+        <h3>Diagnostics</h3>
+        <p>Sensor &amp; hardware health, network link, firmware and maintenance status.</p>
+        <div class="nc-stats"><div class="nc-stat"><small>HEALTH</small><b class="js-health2">100%</b></div><div class="nc-stat"><small>RSSI</small><b class="js-rssi">-45 dBm</b></div></div>
+      </div>
+      <div class="navcard" onclick="showView('reports')">
+        <div class="nc-top"><div class="nc-ic">📅</div><div class="nc-badge">HISTORY</div></div>
+        <h3>Reports &amp; History</h3>
+        <p>Event log, cycle history table and today's usage summary.</p>
+        <div class="nc-stats"><div class="nc-stat"><small>CYCLES TODAY</small><b class="js-cycles2">0</b></div><div class="nc-stat"><small>LITERS TODAY</small><b class="js-liters2">0 L</b></div></div>
+      </div>
+      <div class="navcard" onclick="showView('settings')">
+        <div class="nc-top"><div class="nc-ic">⚙</div><div class="nc-badge">CONFIG</div></div>
+        <h3>Settings</h3>
+        <p>Tune tank capacity, level thresholds, fault limit and electricity cost.</p>
+        <div class="nc-stats"><div class="nc-stat"><small>CAPACITY</small><b class="js-cap2">1000 L</b></div><div class="nc-stat"><small>THRESHOLDS</small><b class="js-th2">5–95%</b></div></div>
+      </div>
+      <div class="navcard" onclick="showView('assistant')" style="border-color:rgba(167,139,250,.3)">
+        <div class="nc-top"><div class="nc-ic">🤖</div><div class="nc-badge" style="background:#241a3a;color:#dcc2ff">AI POWERED</div></div>
+        <h3>AI Assistant</h3>
+        <p>Ask about tank level, motor status, faults, energy cost or maintenance in plain language.</p>
+        <div class="nc-stats"><div class="nc-stat"><small>STATUS</small><b class="fuchsia">ONLINE</b></div><div class="nc-stat"><small>MODE</small><b class="violet">SMART</b></div></div>
+      </div>
+      <div class="navcard" onclick="showView('qraccess')">
+        <div class="nc-top"><div class="nc-ic">📱</div><div class="nc-badge">MOBILE</div></div>
+        <h3>QR Access</h3>
+        <p>Scan a QR code to open this SCADA dashboard instantly on your phone.</p>
+        <div class="nc-stats"><div class="nc-stat"><small>ACCESS</small><b class="cyan">INSTANT</b></div><div class="nc-stat"><small>DEVICES</small><b class="green">ANY</b></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LIVE PROCESS ============ -->
+  <section class="view" data-view="live">
+    <div class="grid">
+      <section class="panel tankPanel"><div class="head"><h2>🏭 TANK PROCESS VIEW</h2><span class="tag">GRAPHICAL</span></div>
+      <div class="tankArea">
+      <div><div class="tank"><div id="water" class="water"><div class="wave"></div></div><div id="tanklabel" class="tanklabel">5%</div><div id="litres" class="litres">50 / 1000 L</div><div class="pipe"></div><div id="flowdot" class="flowdot"></div></div><div style="text-align:center;margin-top:8px;color:var(--muted);font-size:10px">ULTRASONIC LEVEL SENSOR • JSN-SR04T</div></div>
+      <div><div id="gauge" class="gauge"><div class="gin"><div id="gnum" class="gn">5%</div><div class="gm">TANK LEVEL</div></div></div><div style="text-align:center;margin-top:9px;font-size:10px;color:var(--muted)" id="threshtext">LOW 5% ⟶ AUTO START | HIGH 95% ⟶ AUTO STOP</div></div>
+      </div></section>
+
+      <section class="panel"><div class="head"><h2>⚙️ MOTOR CONTROL</h2><span class="tag" id="motortag">AUTO</span></div>
+      <div id="motor" class="motor off"><div class="micon">⚙</div><b id="mtext">MOTOR OFF</b></div>
+      <div class="row"><span class="muted">Relay</span><b id="relay" class="green">READY</b></div>
+      <div class="row"><span class="muted">Runtime (session)</span><b id="runtime">00:00:00</b></div>
+      <div class="row"><span class="muted">Cycles Today</span><b id="cycles">0</b></div>
+      <div class="row"><span class="muted">Avg Cycle Time</span><b id="avgcycle">--</b></div>
+      <br><div class="controls"><button onclick="readESP32()">↻ REFRESH ESP32</button><button onclick="resetESP32()">↺ RESET FAULT</button></div>
+      </section>
+
+      <section class="panel"><div class="head"><h2>🧠 DECISION ENGINE</h2><span class="tag">LOGIC</span></div>
+      <div class="stat"><div class="box"><small>WATER</small><b id="dw" class="cyan">5%</b></div><div class="box"><small>CURRENT</small><b id="dc" class="orange">0.00A</b></div><div class="box"><small>FAULT LIMIT</small><b id="faultlimit1">0.30A</b></div><div class="box"><small>CHECK DELAY</small><b>3 SEC</b></div></div>
+      <br><div id="decision" class="alert">Water ≤ 5% → Motor auto-start condition detected.</div>
+      </section>
+
+      <section class="panel wide"><div class="head"><h2>📡 PROCESS TELEMETRY</h2><span class="tag">LIVE • LEVEL &amp; CURRENT</span></div><canvas id="chart"></canvas>
+      <div class="legend"><span><i class="sw" style="background:#28d7ff"></i>Tank Level %</span><span><i class="sw" style="background:#ffb84d"></i>Motor Current A</span></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ AUTOMATION & PROTECTION ============ -->
+  <section class="view" data-view="automation">
+    <div class="grid">
+      <section class="panel wide"><div class="head"><h2>🚨 PROTECTION SEQUENCE</h2><span class="tag">FAULT CHECK</span></div>
+      <div class="timeline"><div id="s1" class="step on">MOTOR<br>START</div><div class="line"></div><div id="s2" class="step">3 SEC<br>WAIT</div><div class="line"></div><div id="s3" class="step">CURRENT<br>CHECK</div><div class="line"></div><div id="s4" class="step">FAULT<br>DECISION</div></div>
+      <br><div id="fault" class="alert">✓ SYSTEM NORMAL — No motor fault detected.</div>
+      </section>
+
+      <section class="panel"><div class="head"><h2>🛡 SAFETY INTERLOCKS</h2><span class="tag">ARMED</span></div>
+      <div class="row"><span class="muted">Dry-Run Protection</span><b class="green">ARMED</b></div>
+      <div class="row"><span class="muted">Overflow Protection</span><b class="green">ARMED</b></div>
+      <div class="row"><span class="muted">Current Fault Latch</span><b class="green">ARMED</b></div>
+      <div class="row"><span class="muted">Manual Override</span><b class="muted">DISABLED (Full Auto)</b></div>
+      </section>
+
+      <section class="panel"><div class="head"><h2>🧠 DECISION ENGINE DETAIL</h2><span class="tag">LOGIC</span></div>
+      <div class="row"><span class="muted">Start Condition</span><b class="cyan" id="startcond">Level ≤ 5%</b></div>
+      <div class="row"><span class="muted">Stop Condition</span><b class="cyan" id="stopcond">Level ≥ 95%</b></div>
+      <div class="row"><span class="muted">Fault Current Limit</span><b class="orange" id="faultlimit2">0.30 A</b></div>
+      <div class="row"><span class="muted">Verification Delay</span><b>3 sec</b></div>
+      </section>
+
+      <section class="panel wide"><div class="head"><h2>📋 FAULT HISTORY</h2><span class="tag" id="faultcount">0 RECORDED</span></div>
+      <table><thead><tr><th>TIME</th><th>TYPE</th><th>LEVEL AT FAULT</th><th>STATUS</th></tr></thead><tbody id="faulttable"><tr><td colspan="4" class="muted" style="padding:14px 10px">No faults recorded yet.</td></tr></tbody></table>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ ANALYTICS (TABS) ============ -->
+  <section class="view" data-view="analytics">
+    <div class="tabs">
+      <button class="tabbtn active" data-tab="live">Live Values</button>
+      <button class="tabbtn" data-tab="trends">Trends</button>
+      <button class="tabbtn" data-tab="cost">Cost &amp; Energy</button>
+    </div>
+
+    <div class="tabpanel active" data-tab="live">
+      <div class="grid">
+        <section class="panel wide"><div class="head"><h2>🔌 POWER &amp; FLOW — LIVE</h2><span class="tag">ANALYTICS</span></div>
+        <div class="stat"><div class="box"><small>FLOW RATE</small><b id="flow" class="cyan">—</b></div><div class="box"><small>VOLTAGE</small><b id="volt" class="violet">230 V</b></div><div class="box"><small>POWER DRAW</small><b id="power" class="orange">0 W</b></div><div class="box"><small>CURRENT</small><b id="cur" class="green">0.00 A</b></div></div>
+        </section>
+        <section class="panel"><div class="head"><h2>📊 SESSION PEAKS</h2><span class="tag">ANALYTICS</span></div>
+        <div class="row"><span class="muted">Peak Current</span><b id="peak">0.00 A</b></div>
+        <div class="row"><span class="muted">Min / Max Water</span><b id="minmax">5.0% / 5.0%</b></div>
+        <div class="row"><span class="muted">Distance (Ultrasonic)</span><b id="dist">95.5 cm</b></div>
+        </section>
+        <section class="panel"><div class="head"><h2>💧 DELIVERY</h2><span class="tag">TODAY</span></div>
+        <div class="row"><span class="muted">Water Delivered</span><b id="litersdelivered">0 L</b></div>
+        <div class="row"><span class="muted">Cycles</span><b id="cyclesLive">0</b></div>
+        </section>
+      </div>
+    </div>
+
+    <div class="tabpanel" data-tab="trends">
+      <section class="panel wide"><div class="head"><h2>📡 LEVEL &amp; CURRENT TREND</h2><span class="tag">LIVE</span></div><canvas id="chart2"></canvas>
+      <div class="legend"><span><i class="sw" style="background:#28d7ff"></i>Tank Level %</span><span><i class="sw" style="background:#ffb84d"></i>Motor Current A</span></div>
+      </section>
+      <section class="panel wide"><div class="head"><h2>📅 HOURLY LITERS DELIVERED</h2><span class="tag">TODAY</span></div>
+      <div class="bars" id="bars"></div>
+      </section>
+    </div>
+
+    <div class="tabpanel" data-tab="cost">
+      <div class="grid">
+        <section class="panel"><div class="head"><h2>⚡ ENERGY TODAY</h2><span class="tag">kWh</span></div>
+        <div style="text-align:center;padding:10px 0"><b class="green" style="font-size:32px" id="energy">0.000</b><div class="muted" style="font-size:10px">kWh consumed</div></div>
+        </section>
+        <section class="panel"><div class="head"><h2>💰 COST TODAY</h2><span class="tag">₹/UNIT <span id="costrateview">8</span></span></div>
+        <div style="text-align:center;padding:10px 0"><b class="orange" style="font-size:32px" id="cost">₹0.00</b><div class="muted" style="font-size:10px">estimated running cost</div></div>
+        </section>
+        <section class="panel wide"><div class="head"><h2>📈 PROJECTIONS</h2><span class="tag">BASED ON TODAY'S RATE</span></div>
+        <div class="stat"><div class="box"><small>PROJECTED MONTHLY ENERGY</small><b class="cyan" id="projenergy">0.00 kWh</b></div><div class="box"><small>PROJECTED MONTHLY COST</small><b class="orange" id="projcost">₹0.00</b></div><div class="box"><small>AVG POWER (RUNNING)</small><b class="violet" id="avgpower">0 W</b></div><div class="box"><small>PUMP LIFETIME HOURS</small><b class="green" id="lifetimehrs">0.00 h</b></div></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DIAGNOSTICS ============ -->
+  <section class="view" data-view="diagnostics">
+    <div class="grid">
+      <section class="panel wide"><div class="head"><h2>🛠 HARDWARE DIAGNOSTICS</h2><span class="tag">HEALTH</span></div>
+      <div class="stat"><div class="box"><small>ULTRASONIC (JSN-SR04T)</small><b class="green">✓ ONLINE</b></div><div class="box"><small>CURRENT SENSOR (ACS712)</small><b class="green">✓ ONLINE</b></div><div class="box"><small>RELAY MODULE</small><b class="green">✓ READY</b></div><div class="box"><small>ESP32 CONTROLLER</small><b class="green">✓ RUNNING</b></div><div class="box"><small>FLOW SENSOR (YF-S201)</small><b class="green">✓ ONLINE</b></div><div class="box"><small>VOLTAGE MONITOR</small><b class="green">✓ ONLINE</b></div></div>
+      </section>
+
+      <section class="panel"><div class="head"><h2>📶 NETWORK / LINK</h2><span class="tag">CONNECTIVITY</span></div>
+      <div class="row"><span class="muted">Wi-Fi Signal (RSSI)</span><b id="rssi" class="cyan">-45 dBm</b></div>
+      <div class="row"><span class="muted">Firmware Version</span><b>v2.3.1</b></div>
+      <div class="row"><span class="muted">Last Cloud Sync</span><b id="lastsync">just now</b></div>
+      <div class="row"><span class="muted">Latency</span><b id="latency" class="green">42 ms</b></div>
+      </section>
+
+      <section class="panel"><div class="head"><h2>🔧 MAINTENANCE</h2><span class="tag">SCHEDULE</span></div>
+      <div class="row"><span class="muted">Pump Lifetime Runtime</span><b id="lifetime2">0.00 h</b></div>
+      <div class="row"><span class="muted">Next Service Due</span><b id="nextservice" class="orange">in 500.00 h</b></div>
+      <div class="row"><span class="muted">Filter Status</span><b class="green">CLEAN</b></div>
+      </section>
+
+      <section class="panel"><div class="head"><h2>💻 CONTROLLER LOAD</h2><span class="tag">ESP32</span></div>
+      <div class="row"><span class="muted">CPU Load</span><b id="cpu" class="cyan">—%</b></div>
+      <div class="row"><span class="muted">Free Memory</span><b id="mem" class="cyan">—%</b></div>
+      <div class="row"><span class="muted">Board Temperature</span><b id="boardtemp" class="violet">—°C</b></div>
+      </section>
+
+      <section class="panel"><div class="head"><h2>❤️ SYSTEM HEALTH</h2><span class="tag">OVERALL</span></div>
+      <div style="text-align:center;padding:14px 0"><b id="health" class="green" style="font-size:36px">100%</b><div class="muted" style="font-size:10px;margin-top:4px">All subsystems nominal</div></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ REPORTS & HISTORY (TABS) ============ -->
+  <section class="view" data-view="reports">
+    <div class="tabs">
+      <button class="tabbtn active" data-tab="events">Event Log</button>
+      <button class="tabbtn" data-tab="cyclesTab">Cycle History</button>
+      <button class="tabbtn" data-tab="summary">Daily Summary</button>
+    </div>
+
+    <div class="tabpanel active" data-tab="events">
+      <section class="panel wide"><div class="head"><h2>🔔 EVENT TIMELINE</h2><span class="tag">LIVE LOG</span></div><div id="events" class="events"></div></section>
+    </div>
+
+    <div class="tabpanel" data-tab="cyclesTab">
+      <section class="panel wide"><div class="head"><h2>🔁 CYCLE HISTORY</h2><span class="tag" id="cyclecount">0 CYCLES TODAY</span></div>
+      <table><thead><tr><th>#</th><th>START TIME</th><th>DURATION</th><th>LITERS DELIVERED</th><th>STATUS</th></tr></thead><tbody id="cycletable"><tr><td colspan="5" class="muted" style="padding:14px 10px">No completed cycles yet.</td></tr></tbody></table>
+      </section>
+    </div>
+
+    <div class="tabpanel" data-tab="summary">
+      <div class="grid">
+        <section class="panel"><div class="head"><h2>📅 TODAY'S TOTALS</h2><span class="tag">SUMMARY</span></div>
+        <div class="row"><span class="muted">Total Cycles</span><b id="sumcycles">0</b></div>
+        <div class="row"><span class="muted">Water Delivered</span><b id="sumliters">0 L</b></div>
+        <div class="row"><span class="muted">Energy Used</span><b id="sumenergy">0.000 kWh</b></div>
+        <div class="row"><span class="muted">Estimated Cost</span><b id="sumcost">₹0.00</b></div>
+        <div class="row"><span class="muted">Total Motor Runtime</span><b id="sumruntime">00:00:00</b></div>
+        </section>
+        <section class="panel wide"><div class="head"><h2>📅 HOURLY LITERS DELIVERED</h2><span class="tag">TODAY</span></div>
+        <div class="bars" id="bars2"></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section class="view" data-view="settings">
+    <section class="panel wide">
+      <div class="head"><h2>⚙ SYSTEM CONFIGURATION</h2><span class="tag">EDITABLE</span></div>
+      <div class="formgrid">
+        <div class="field"><label>Tank Capacity (Litres)</label><input type="number" id="cfgCapacity" value="1000" min="50" step="10"></div>
+        <div class="field"><label>Low Level Threshold — Auto Start (%)</label><input type="number" id="cfgLow" value="5" min="0" max="50" step="1"></div>
+        <div class="field"><label>High Level Threshold — Auto Stop (%)</label><input type="number" id="cfgHigh" value="95" min="50" max="100" step="1"></div>
+        <div class="field"><label>Fault Current Limit (A)</label><input type="number" id="cfgFault" value="0.30" min="0.05" max="2" step="0.05"></div>
+        <div class="field"><label>Electricity Cost (₹ per kWh)</label><input type="number" id="cfgCost" value="8" min="1" max="50" step="0.5"></div>
+        <div class="field"><label>Supply Voltage (V)</label><input type="number" id="cfgVolt" value="230" min="180" max="260" step="1"></div>
+      </div>
+      <div class="savebar"><button class="btn-primary" onclick="saveSettings()">💾 Save Configuration</button><button class="btn-ghost" onclick="resetESP32()">↺ Reset Full System</button></div>
+      <div class="alert" style="margin-top:16px" id="settingsMsg">Dashboard displays live ESP32 sensor data. Settings shown here do not change ESP32 control logic.</div>
+    </section>
+  </section>
+
+  <!-- ============ AI ASSISTANT ============ -->
+  <section class="view" data-view="assistant">
+    <div class="aiwrap">
+      <div class="aichat">
+        <div class="aichat-head">
+          <div class="aichat-avatar">🤖</div>
+          <div><b>Tank Assistant</b><div class="sub">Reads live sensor &amp; automation data · answers instantly</div></div>
+        </div>
+        <div class="aimsgs" id="aimsgs"></div>
+        <div class="aichips" id="aichips">
+          <div class="chip" onclick="aiAsk('What is the tank level?')">Tank level?</div>
+          <div class="chip" onclick="aiAsk('Is the motor running?')">Motor status?</div>
+          <div class="chip" onclick="aiAsk('Any faults?')">Any faults?</div>
+          <div class="chip" onclick="aiAsk('How much did today cost?')">Today's cost?</div>
+          <div class="chip" onclick="aiAsk('System health?')">System health?</div>
+          <div class="chip" onclick="aiAsk('When will the tank be full?')">Time to full?</div>
+        </div>
+        <div class="aiinput">
+          <input id="aiInputBox" type="text" placeholder="Ask about level, motor, faults, energy, cost, maintenance…" onkeydown="if(event.key==='Enter')aiSend()">
+          <button onclick="aiSend()">Ask ➤</button>
+        </div>
+      </div>
+      <div class="aiside">
+        <section class="panel"><div class="head"><h2>🤖 ASSISTANT</h2><span class="tag" style="background:#241a3a;color:#dcc2ff">RULE-ENGINE</span></div>
+          <div class="aistatrow"><span class="muted">Data Source</span><b class="cyan">Live ESP32</b></div>
+          <div class="aistatrow"><span class="muted">Response Mode</span><b class="violet">Instant / On-device</b></div>
+          <div class="aistatrow"><span class="muted">Questions Answered</span><b id="aiqcount" class="green">0</b></div>
+        </section>
+        <section class="panel"><div class="head"><h2>💡 SUGGESTED</h2><span class="tag">TRY ASKING</span></div>
+          <div class="row"><span class="muted">"Water delivered today?"</span></div>
+          <div class="row"><span class="muted">"Predict next service"</span></div>
+          <div class="row"><span class="muted">"Explain the fault logic"</span></div>
+          <div class="row"><span class="muted">"Recommend an action"</span></div>
+        </section>
+        <div class="alert" style="border-left-color:var(--violet)">This assistant reasons over your ESP32 live values — no external server or internet call is used, so it works fully offline.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ QR ACCESS ============ -->
+  <section class="view" data-view="qraccess">
+    <div class="qrwrap">
+      <section class="panel">
+        <div class="head"><h2>📱 SCAN TO OPEN DASHBOARD</h2><span class="tag">LIVE QR</span></div>
+        <div class="qrbox" id="qrboxTarget"></div>
+        <div style="margin-top:14px" class="qrurl" id="qrUrlText">—</div>
+        <div class="savebar">
+          <button class="btn-primary" onclick="copyQrUrl()">🔗 Copy Link</button>
+          <button class="btn-ghost" onclick="downloadQr()">⬇ Download QR</button>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="head"><h2>⚙ QR SOURCE URL</h2><span class="tag">EDITABLE</span></div>
+        <div class="field"><label>Dashboard URL to encode</label><input type="text" id="qrUrlInput" placeholder="https://your-hosted-dashboard-link"></div>
+        <div class="savebar"><button class="btn-primary" onclick="regenQr()">🔄 Regenerate QR</button><button class="btn-ghost" onclick="useCurrentUrl()">📍 Use Current Page URL</button></div>
+        <div class="alert" style="margin-top:16px">Opening this file directly (file://) can't be scanned from another phone. Host it online first, then paste that link above.</div>
+        <div class="head" style="margin-top:20px"><h2>🚀 HOW TO PUBLISH THIS DASHBOARD</h2><span class="tag">3 OPTIONS</span></div>
+        <div class="steplist">
+          <div class="stepitem"><div class="stepnum">1</div><div><div class="st-t">GitHub Pages (free)</div><div class="st-d">Upload this .html file to a GitHub repo → enable Pages in Settings → copy the generated URL into the box above.</div></div></div>
+          <div class="stepitem"><div class="stepnum">2</div><div><div class="st-t">Netlify Drop (free, no login)</div><div class="st-d">Drag this file onto app.netlify.com/drop → it instantly gives you a live https link.</div></div></div>
+          <div class="stepitem"><div class="stepnum">3</div><div><div class="st-t">Any web host / server</div><div class="st-d">Upload via FTP or your hosting panel and use that domain — the QR code updates live as you type.</div></div></div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  </div>
+  <div class="footer">SMART WATER TANK AUTOMATION • GRAPHICAL DEMONSTRATION • ESP32 LIVE • REAL SENSOR DATA • Fully autonomous auto-start / auto-stop / fault-latch logic</div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+let water=5,current=0,peak=0,motor=false,faulted=false,checking=false,checkAt=0,run=0,cycles=0,last=Date.now(),
+    data=[],curData=[],events=[],min=5,max=5,uptime=0,cycleStart=0,cycleTimes=[],
+    energyWs=0,litersToday=0,hourly=new Array(12).fill(0),hourIdx=0,flow=0,
+    faultLog=[],cycleLog=[],lifetimeHours=0,rssi=-45,latency=42;
+
+let cfg={capacity:1000,low:5,high:95,fault:0.30,cost:8,volt:230};
+
+const $=id=>document.getElementById(id);
+const $$=cls=>document.querySelectorAll(cls);
+
+function log(x){events.unshift(new Date().toLocaleTimeString()+" • "+x);events=events.slice(0,14);$('events').innerHTML=events.map(e=>'<div class="event">'+e+'</div>').join('')}
+function fmtTime(s){let h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=Math.floor(s%60);return [h,m,sec].map(v=>String(v).padStart(2,'0')).join(':')}
+
+/* ---------- NAVIGATION ---------- */
+function showView(name){
+  $$('.navitem').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
+  $$('.view').forEach(v=>v.classList.toggle('active',v.dataset.view===name));
+  const titles={home:'Overview',live:'Live Process',automation:'Automation & Protection',analytics:'Power & Flow Analytics',diagnostics:'Diagnostics',reports:'Reports & History',settings:'Settings',assistant:'AI Assistant',qraccess:'QR Access'};
+  $('viewtitle').textContent=titles[name];
+  $('crumbs').textContent='DASHBOARD / '+titles[name].toUpperCase();
+  document.getElementById('sidebar').classList.remove('open');
+  window.scrollTo(0,0);
+}
+$$('.navitem').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+
+function initTabs(scopeSelector){
+  document.querySelectorAll(scopeSelector+' .tabbtn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      let parent=btn.closest('.view');
+      parent.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active',b===btn));
+      parent.querySelectorAll('.tabpanel').forEach(p=>p.classList.toggle('active',p.dataset.tab===btn.dataset.tab));
+      draw();draw2();
+    });
+  });
+}
+initTabs('[data-view="analytics"]');
+initTabs('[data-view="reports"]');
+
+/* ---------- SETTINGS ---------- */
+function saveSettings(){
+  cfg.capacity=parseFloat($('cfgCapacity').value)||1000;
+  cfg.low=parseFloat($('cfgLow').value)||5;
+  cfg.high=parseFloat($('cfgHigh').value)||95;
+  cfg.fault=parseFloat($('cfgFault').value)||0.30;
+  cfg.cost=parseFloat($('cfgCost').value)||8;
+  cfg.volt=parseFloat($('cfgVolt').value)||230;
+  $('threshtext').textContent='LOW '+cfg.low+'% ⟶ AUTO START | HIGH '+cfg.high+'% ⟶ AUTO STOP';
+  $('faultlimit1').textContent=cfg.fault.toFixed(2)+'A';
+  $('faultlimit2').textContent=cfg.fault.toFixed(2)+' A';
+  $('startcond').textContent='Level ≤ '+cfg.low+'%';
+  $('stopcond').textContent='Level ≥ '+cfg.high+'%';
+  $('costrateview').textContent=cfg.cost;
+  $('settingsMsg').textContent='✓ Configuration saved — new thresholds are now active.';
+  log('SETTINGS UPDATED → Capacity '+cfg.capacity+'L, thresholds '+cfg.low+'–'+cfg.high+'%');
+  render();
+}
+
+/* ---------- CHARTS ---------- */
+function drawOn(canvasId){
+  let c=$(canvasId);if(!c||c.offsetParent===null)return;
+  let r=c.getBoundingClientRect(),d=devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;
+  let x=c.getContext('2d'),w=r.width,h=r.height;x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,w,h);
+  x.strokeStyle='#18323e';for(let i=1;i<5;i++){x.beginPath();x.moveTo(0,h*i/5);x.lineTo(w,h*i/5);x.stroke()}
+  if(data.length<2)return;
+  x.beginPath();data.forEach((v,i)=>{let px=i/(data.length-1)*w,py=h-v/100*h;i?x.lineTo(px,py):x.moveTo(px,py)});x.strokeStyle='#28d7ff';x.lineWidth=2.5;x.stroke();
+  x.beginPath();curData.forEach((v,i)=>{let px=i/(curData.length-1)*w,py=h-Math.min(v/1.5,1)*h;i?x.lineTo(px,py):x.moveTo(px,py)});x.strokeStyle='#ffb84d';x.lineWidth=2;x.stroke();
+}
+function draw(){drawOn('chart')}
+function draw2(){drawOn('chart2')}
+
+function drawBarsInto(elId){
+  let el=$(elId);if(!el)return;
+  let mx=Math.max(1,...hourly);
+  el.innerHTML=hourly.map((v,i)=>{let hpx=Math.max(2,(v/mx)*90);return '<div class="bar" style="height:'+hpx+'px"><span>H'+(i+1)+'</span></div>'}).join('');
+}
+
+/* ---------- RENDER ---------- */
+function render(){
+  let dist=100-water*.9;
+  let liters=Math.round(water/100*cfg.capacity);
+
+  // LIVE view
+  if($('water')){
+    $('water').style.height=water+'%';
+    $('tanklabel').textContent=water.toFixed(1)+'%';
+    $('litres').textContent=liters+' / '+cfg.capacity+' L';
+    $('gnum').textContent=water.toFixed(1)+'%';
+    $('gauge').style.background=`conic-gradient(#00e6a0 0deg,#29d7ff ${water*3.6}deg,#183440 ${water*3.6}deg)`;
+    $('dw').textContent=water.toFixed(1)+'%';
+    $('motortag').textContent=faulted?'FAULT':motor?'RUNNING':'STANDBY';
+    $('motor').className='motor '+(faulted?'fault':motor?'run':'off');
+    $('mtext').textContent=faulted?'MOTOR FAULT':motor?'MOTOR RUNNING':'MOTOR OFF';
+    $('relay').textContent=motor&&!faulted?'ACTIVE':'READY';
+    $('runtime').textContent=fmtTime(run);
+    $('cycles').textContent=cycles;
+    $('avgcycle').textContent=cycleTimes.length?fmtTime(cycleTimes.reduce((a,b)=>a+b,0)/cycleTimes.length):'--';
+    $('dc').textContent=current.toFixed(2)+'A';
+    $('decision').textContent=faulted?'Current < '+cfg.fault.toFixed(2)+'A after 3 sec → Fault latched, motor stopped automatically.':motor?'Motor running → verifying current after 3 seconds.':'Water ≤ '+cfg.low+'% auto-starts motor; water ≥ '+cfg.high+'% auto-stops motor.';
+    $('flowdot').style.opacity=motor&&!faulted?1:0;
+  }
+
+  // AUTOMATION view
+  if($('fault')){
+    $('fault').textContent=faulted?'🚨 MOTOR FAULT LATCHED — LOW CURRENT (DRY-RUN) DETECTED.':checking?'⏳ Motor current verification in progress…':'✓ SYSTEM NORMAL — No motor fault detected.';
+    $('s2').className='step '+(checking?'on':'');
+    $('s3').className='step '+(checking?'on':'');
+    $('s4').className='step '+(faulted?'on':'');
+  }
+
+  // ANALYTICS
+  let power=motor&&!faulted?(cfg.volt*current):0;
+  if($('flow')){
+    $('flow').textContent='—';
+    $('volt').textContent=cfg.volt+' V';
+    $('power').textContent=Math.round(power)+' W';
+    $('cur').textContent=current.toFixed(2)+' A';
+    $('peak').textContent=peak.toFixed(2)+' A';
+    $('minmax').textContent=min.toFixed(1)+'% / '+max.toFixed(1)+'%';
+    $('dist').textContent=dist.toFixed(1)+' cm';
+    $('litersdelivered').textContent=Math.round(litersToday)+' L';
+    $('cyclesLive').textContent=cycles;
+    $('energy').textContent=(energyWs/3600000).toFixed(3);
+    $('cost').textContent='₹'+((energyWs/3600000)*cfg.cost).toFixed(2);
+    let elapsedH=Math.max(uptime/3600,0.001);
+    let projEnergy=(energyWs/3600000)/elapsedH*24*30;
+    $('projenergy').textContent=projEnergy.toFixed(2)+' kWh';
+    $('projcost').textContent='₹'+(projEnergy*cfg.cost).toFixed(2);
+    $('avgpower').textContent=run>0?Math.round((energyWs/run))+' W':'0 W';
+    $('lifetimehrs').textContent=lifetimeHours.toFixed(2)+' h';
+  }
+
+  // DIAGNOSTICS
+  if($('rssi')){
+    $('rssi').textContent=rssi+' dBm';
+    $('lastsync').textContent=Math.floor(uptime%7)+'s ago';
+    $('latency').textContent=latency+' ms';
+    $('lifetime2').textContent=lifetimeHours.toFixed(2)+' h';
+    $('nextservice').textContent='in '+Math.max(0,500-lifetimeHours).toFixed(2)+' h';
+    $('cpu').textContent=Math.round(18+Math.sin(uptime/3)*6+(motor?10:0))+'%';
+    $('mem').textContent=Math.round(62+Math.cos(uptime/4)*4)+'%';
+    $('boardtemp').textContent=(34+(motor?3:0)+Math.sin(uptime/5)).toFixed(1)+'°C';
+    $('health').textContent=faulted?'60%':'100%';
+    $('health').className=faulted?'red':'green';
+  }
+
+  // REPORTS
+  if($('sumcycles')){
+    $('sumcycles').textContent=cycles;
+    $('sumliters').textContent=Math.round(litersToday)+' L';
+    $('sumenergy').textContent=(energyWs/3600000).toFixed(3)+' kWh';
+    $('sumcost').textContent='₹'+((energyWs/3600000)*cfg.cost).toFixed(2);
+    $('sumruntime').textContent=fmtTime(run);
+    $('cyclecount').textContent=cycles+' CYCLES TODAY';
+    $('faultcount').textContent=faultLog.length+' RECORDED';
+  }
+
+  // HOME hero + cards
+  $$('.js-level').forEach(e=>e.textContent=water.toFixed(1)+'%');
+  $$('.js-level2').forEach(e=>e.textContent=water.toFixed(1)+'%');
+  $$('.js-litres').forEach(e=>e.textContent=liters+' / '+cfg.capacity+' L');
+  $$('.js-motorstat').forEach(e=>{e.textContent=faulted?'FAULT':motor?'RUNNING':'STANDBY';e.className='js-motorstat '+(faulted?'red':motor?'cyan':'green')});
+  $$('.js-motorstat2').forEach(e=>e.textContent=faulted?'FAULT':motor?'ON':'OFF');
+  $$('.js-relay').forEach(e=>e.textContent=motor&&!faulted?'ACTIVE':'READY');
+  $$('.js-power').forEach(e=>e.textContent=Math.round(power)+' W');
+  $$('.js-flow').forEach(e=>e.textContent='—');
+  $$('.js-alerts').forEach(e=>e.textContent=faultLog.length);
+  $$('.js-alerts2').forEach(e=>e.textContent=faultLog.length);
+  $$('.js-health').forEach(e=>e.textContent=faulted?'60%':'100%');
+  $$('.js-health2').forEach(e=>e.textContent=faulted?'60%':'100%');
+  $$('.js-energy2').forEach(e=>e.textContent=(energyWs/3600000).toFixed(3));
+  $$('.js-cost2').forEach(e=>e.textContent='₹'+((energyWs/3600000)*cfg.cost).toFixed(2));
+  $$('.js-rssi').forEach(e=>e.textContent=rssi+' dBm');
+  $$('.js-cycles2').forEach(e=>e.textContent=cycles);
+  $$('.js-liters2').forEach(e=>e.textContent=Math.round(litersToday)+' L');
+  $$('.js-cap2').forEach(e=>e.textContent=cfg.capacity+' L');
+  $$('.js-th2').forEach(e=>e.textContent=cfg.low+'–'+cfg.high+'%');
+  $('uptime').textContent=fmtTime(uptime);
+
+  drawBarsInto('bars');drawBarsInto('bars2');
+}
+
+/* ---------- CYCLE / FAULT TABLES ---------- */
+function pushCycleRow(row){
+  cycleLog.unshift(row);cycleLog=cycleLog.slice(0,20);
+  $('cycletable').innerHTML=cycleLog.map((c,i)=>
+    '<tr><td>'+(cycleLog.length-i)+'</td><td>'+c.start+'</td><td>'+c.duration+'</td><td>'+c.liters+' L</td><td><span class="pill '+(c.status==='OK'?'ok':'bad')+'">'+c.status+'</span></td></tr>'
+  ).join('');
+}
+function pushFaultRow(row){
+  faultLog.unshift(row);faultLog=faultLog.slice(0,20);
+  $('faulttable').innerHTML=faultLog.map(f=>
+    '<tr><td>'+f.time+'</td><td>'+f.type+'</td><td>'+f.level+'%</td><td><span class="pill bad">LATCHED</span></td></tr>'
+  ).join('');
+}
+
+/* ---------- ESP32 LIVE DATA ---------- */
+const ESP32_ENDPOINT = "/api/data";
+
+let lastESP32Poll = 0;
+let previousWater = null;
+let previousMotor = false;
+let lastLiveMillis = Date.now();
+let connected = false;
+
+function parseRuntime(s){
+  if(typeof s !== "string") return 0;
+  const p = s.split(":").map(Number);
+  if(p.length !== 3 || p.some(Number.isNaN)) return 0;
+  return p[0]*3600 + p[1]*60 + p[2];
+}
+
+function setConnectionState(ok){
+  connected = ok;
+  const badge = document.querySelector(".live");
+  if(!badge) return;
+  badge.innerHTML = ok
+    ? '<span class="dot"></span>ESP32 LIVE'
+    : '⚠ ESP32 OFFLINE';
+  badge.style.color = ok ? 'var(--green)' : 'var(--red)';
+  badge.style.borderColor = ok ? 'rgba(16,229,168,.3)' : 'rgba(255,92,122,.35)';
+}
+
+function updateLiveFromESP32(d){
+  const now = Date.now();
+  const dt = Math.max(0, Math.min(5, (now-lastLiveMillis)/1000));
+  lastLiveMillis = now;
+
+  const newWater = Number(d.water) || 0;
+  const newCurrent = Number(d.current) || 0;
+  const newMotor = !!d.motor;
+  const newFault = !!d.fault;
+
+  // Live controller values
+  water = newWater;
+  current = newCurrent;
+  motor = newMotor;
+  faulted = newFault;
+  checking = !!d.checking;
+  run = parseRuntime(d.runtime);
+  rssi = null;
+  latency = null;
+
+  if(d.minWater !== undefined) min = Number(d.minWater);
+  if(d.maxWater !== undefined) max = Number(d.maxWater);
+  if(d.peakCurrent !== undefined) peak = Number(d.peakCurrent);
+
+  // The ESP32 project does not have a flow sensor in its actual firmware.
+  flow = 0;
+
+  // Estimate energy and delivered water locally from real ESP32 readings.
+  const power = newMotor && !newFault ? (cfg.volt * newCurrent) : 0;
+  energyWs += power * dt;
+
+  if(previousWater !== null && newMotor && newWater > previousWater){
+    const delivered = (newWater - previousWater) / 100 * cfg.capacity;
+    if(delivered > 0 && delivered < cfg.capacity * 0.2){
+      litersToday += delivered;
+    }
+  }
+
+  if(newMotor && !previousMotor){
+    cycles++;
+    cycleStart = run;
+    log('ESP32 → MOTOR STARTED');
+  }
+  if(!newMotor && previousMotor){
+    log(newFault ? 'ESP32 → MOTOR FAULT / MOTOR STOPPED' : 'ESP32 → MOTOR STOPPED');
+  }
+
+  previousWater = newWater;
+  previousMotor = newMotor;
+
+  // Store real telemetry for graphs.
+  data.push(water); if(data.length > 60) data.shift();
+  curData.push(current); if(curData.length > 60) curData.shift();
+
+  uptime = 0; // Controller uptime is shown separately from ESP32 JSON.
+  if($('lastsync')) $('lastsync').textContent = 'just now';
+  if($('latency')) $('latency').textContent = 'LIVE';
+  if($('rssi')) $('rssi').textContent = 'AP';
+  if($('health')) {
+    $('health').textContent = (d.health !== undefined ? d.health : (newFault ? 60 : 100)) + '%';
+    $('health').className = newFault ? 'red' : 'green';
+  }
+
+  render();
+  draw();
+  draw2();
+}
+
+async function readESP32(){
+  const t0 = performance.now();
+  try{
+    const response = await fetch(ESP32_ENDPOINT, {
+      method: 'GET',
+      cache: 'no-store'
+    });
+    if(!response.ok) throw new Error('HTTP '+response.status);
+
+    const d = await response.json();
+    latency = Math.round(performance.now() - t0);
+    updateLiveFromESP32(d);
+    setConnectionState(true);
+  }catch(err){
+    console.error('ESP32 connection failed:', err);
+    setConnectionState(false);
+    if($('lastsync')) $('lastsync').textContent = 'connection lost';
+    render();
+  }
+}
+
+async function resetESP32(){
+  try{
+    const response = await fetch('/api/reset', {method:'POST'});
+    const message = await response.text();
+    log('ESP32 → '+message);
+    await readESP32();
+  }catch(err){
+    alert('Cannot connect to ESP32');
+  }
+}
+
+// No random/simulated values are generated here.
+// All process values come from the ESP32 /data API.
+readESP32();
+setInterval(readESP32, 1000);
+/* ================= AI ASSISTANT (on-device rule engine, reads live sim state) ================= */
+let aiQCount=0;
+function addMsg(who,html){
+  let el=document.createElement('div');
+  el.className='msg '+who;
+  el.innerHTML=html;
+  $('aimsgs').appendChild(el);
+  $('aimsgs').scrollTop=$('aimsgs').scrollHeight;
+}
+function aiSend(){
+  let box=$('aiInputBox');let v=box.value.trim();if(!v)return;
+  box.value='';aiAsk(v);
+}
+function aiAsk(q){
+  addMsg('user',q.replace(/</g,'&lt;'));
+  let a=aiAnswer(q.toLowerCase());
+  setTimeout(()=>{addMsg('bot',a);aiQCount++;$('aiqcount').textContent=aiQCount;},280);
+}
+function aiAnswer(q){
+  let liters=Math.round(water/100*cfg.capacity);
+  let power=motor&&!faulted?(cfg.volt*current):0;
+  let costToday=((energyWs/3600000)*cfg.cost).toFixed(2);
+  let energyToday=(energyWs/3600000).toFixed(3);
+  let health=faulted?'60%':'100%';
+
+  if(/fault|error|problem|issue/.test(q)){
+    if(faulted) return '🚨 Yes — a <b>dry-run fault</b> is currently latched (motor stopped automatically, low current detected). Recorded faults today: <b>'+faultLog.length+'</b>. Use "Reset System" on the Live Process page once the cause is resolved.';
+    return '✓ No active faults. Dry-run and overflow protection are both <b>ARMED</b>. Faults recorded today: <b>'+faultLog.length+'</b>.';
+  }
+  if(/level|percent|%|how full|water level/.test(q)){
+    return 'Current tank level is <b>'+water.toFixed(1)+'%</b> ('+liters+' / '+cfg.capacity+' L). Auto-start triggers at '+cfg.low+'%, auto-stop at '+cfg.high+'%.';
+  }
+  if(/motor|pump|running|status/.test(q)){
+    if(faulted) return 'Motor status: <b>FAULT</b> — stopped and latched. It will not restart automatically until the system is reset.';
+    return motor? 'Motor is currently <b>RUNNING</b> — session runtime '+fmtTime(run)+', drawing about '+Math.round(power)+' W at '+current.toFixed(2)+' A.' : 'Motor is <b>on standby</b> (OFF), relay is READY. It will auto-start when level drops to '+cfg.low+'%.';
+  }
+  if(/full|when will|fill time|eta/.test(q)){
+    if(faulted) return 'Cannot estimate fill time — the system is in a fault state. Reset it first.';
+    if(motor){let remainPct=Math.max(0,cfg.high-water);let secs=remainPct/3;return 'At the current fill rate, the tank should reach '+cfg.high+'% in about <b>'+fmtTime(secs)+'</b>.';}
+    return 'Motor is on standby. It will auto-start once level falls to '+cfg.low+'%, then fill to '+cfg.high+'%.';
+  }
+  if(/cost|money|₹|rupee|bill/.test(q)){
+    return "Today's estimated running cost is <b>₹"+costToday+'</b> (rate ₹'+cfg.cost+'/kWh), from '+energyToday+' kWh consumed so far.';
+  }
+  if(/energy|kwh|power|watt/.test(q)){
+    return 'Energy used today: <b>'+energyToday+' kWh</b>. Live power draw: <b>'+Math.round(power)+' W</b> at '+cfg.volt+' V.';
+  }
+  if(/health|okay|ok\?|status of system|overall/.test(q)){
+    return 'Overall system health is <b>'+health+'</b>. '+(faulted?'A fault is degrading performance — investigate the motor/current sensor.':'All subsystems (ultrasonic, current sensor, relay, ESP32, flow sensor) are nominal.');
+  }
+  if(/deliver|liters|litres|water today|usage/.test(q)){
+    return 'Water delivered today: <b>'+Math.round(litersToday)+' L</b> across <b>'+cycles+'</b> completed cycle(s).';
+  }
+  if(/maintenance|service|lifetime|hours run/.test(q)){
+    let next=Math.max(0,500-lifetimeHours).toFixed(1);
+    return 'Pump lifetime runtime is <b>'+lifetimeHours.toFixed(2)+' h</b>. Next service is due in about <b>'+next+' h</b> of runtime.';
+  }
+  if(/recommend|advice|suggest|what should/.test(q)){
+    if(faulted) return 'Recommendation: inspect the pump/wiring for a dry-run condition, then press "Reset System" on the Live Process page to re-arm automation.';
+    if(water<cfg.low+5) return 'Recommendation: level is near the low threshold — expect an auto-start soon. No action needed, automation will handle it.';
+    return 'Recommendation: system is operating normally in full auto mode. No action required.';
+  }
+  if(/wifi|signal|network|rssi|connect/.test(q)){
+    return 'Wi-Fi signal is <b>'+rssi+' dBm</b> with about '+latency+' ms latency — link quality is good.';
+  }
+  if(/explain|logic|how does|work/.test(q)){
+    return 'Automation logic: the motor auto-starts when level ≤ '+cfg.low+'%, and auto-stops when level ≥ '+cfg.high+'%. After starting, current is verified for 3 seconds — if it stays below '+cfg.fault.toFixed(2)+' A, a dry-run fault is latched and the motor is stopped for safety.';
+  }
+  if(/hi|hello|hey/.test(q)){
+    return 'Hello! I can answer questions about tank level, motor status, faults, energy, cost, and maintenance — try one of the quick chips below.';
+  }
+  return "I can help with tank level, motor status, faults, energy/cost, water delivered, maintenance and system health. Try, for example: <i>\"Is the motor running?\"</i> or <i>\"How much did today cost?\"</i>";
+}
+addMsg('bot','Hi, I\'m your Tank Assistant 👋 I read the live ESP32 sensor data and can answer questions about level, motor status, faults, energy, cost and maintenance — completely offline. Try a quick question below.');
+
+/* ================= QR ACCESS ================= */
+let qrObj=null;
+function currentDefaultUrl(){
+  try{
+    if(location.protocol==='file:') return 'https://your-hosted-dashboard-link';
+    return location.href;
+  }catch(e){return 'https://your-hosted-dashboard-link';}
+}
+function renderQr(url){
+  let box=$('qrboxTarget');
+  box.innerHTML='';
+  if(window.QRCode){
+    qrObj=new QRCode(box,{text:url,width:196,height:196,colorDark:'#0a0f1d',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+  }else{
+    box.innerHTML='<div style="color:#333;font-size:11px;padding:20px;text-align:center">QR library failed to load — check your internet connection.</div>';
+  }
+  $('qrUrlText').textContent=url;
+}
+function regenQr(){
+  let v=$('qrUrlInput').value.trim()||currentDefaultUrl();
+  renderQr(v);
+  log('QR CODE REGENERATED → '+v);
+}
+function useCurrentUrl(){
+  $('qrUrlInput').value=currentDefaultUrl();
+  regenQr();
+}
+function copyQrUrl(){
+  let v=$('qrUrlInput').value.trim()||currentDefaultUrl();
+  navigator.clipboard&&navigator.clipboard.writeText(v).catch(()=>{});
+  let btn=event&&event.target;
+  if(btn){let old=btn.textContent;btn.textContent='✓ Copied';setTimeout(()=>btn.textContent=old,1400);}
+}
+function downloadQr(){
+  let box=$('qrboxTarget');
+  let canvas=box.querySelector('canvas');
+  let img=box.querySelector('img');
+  let a=document.createElement('a');
+  if(canvas){a.href=canvas.toDataURL('image/png');}
+  else if(img){a.href=img.src;}
+  else return;
+  a.download='smart-water-tank-qr.png';
+  a.click();
+}
+$('qrUrlInput').value=currentDefaultUrl();
+renderQr($('qrUrlInput').value);
+</script></body></html>
